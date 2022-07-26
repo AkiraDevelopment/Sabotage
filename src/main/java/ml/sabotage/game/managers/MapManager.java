@@ -56,6 +56,7 @@ public class MapManager {
 							break;
 
 						case OAK_SIGN:
+						case OAK_WALL_SIGN:
 							Sign sign = (Sign) block;
 
 							if(sign.getLine(0).equalsIgnoreCase("[wool_lamp]"))
@@ -70,7 +71,7 @@ public class MapManager {
 					}
 				});
 				
-				int limit = 50 + size * 20;
+				int limit = 20 * size;
 		    	
 		        while(chests.size() > limit)
 		        	Sprink.randomElement(chests, true).getBlock().setType(Material.AIR);
