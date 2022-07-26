@@ -47,7 +47,7 @@ public class GenericCommands implements CommandExecutor, TabCompleter {
 			"&c&m----------&r &eSabotage X Info &c&m-----------\n" +
 			"&3About: &7Sabotage is a Trouble in Terrorist Town plugin.\n" + 
 			"&3Authors: &70-o#9646 & AkiraDev\n" + 
-			"&3Version: &71.0.0\n" + 
+			"&3Version: &7" + Main.plugin.getDescription().getVersion() + "\n" +
 			"&3Credit to: &7ThaRedstoner\n" +
 			"&c&m------------------------------------");
     
