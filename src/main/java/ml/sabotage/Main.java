@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Level;
 
+import ml.sabotage.listeners.ChatListener;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -42,7 +43,7 @@ public class Main extends JavaPlugin {
     public void onEnable() {    
     	Main.plugin = this;  
         Main.config = ConfigSettings.load();
-        
+        this.getServer().getPluginManager().registerEvents(new ChatListener(), this);
         new File(DATA_FOLDER + "/players").mkdirs();
         new File(DATA_FOLDER + "/worlds").mkdirs();
         
@@ -71,4 +72,13 @@ public class Main extends JavaPlugin {
     	new VoteCommand();
 		new KarmaCommands();
     }
+
+	public static Main getInstance() {
+		return Main.plugin;
+	}
+
+	public static List<SabPlayer> getSabPlayers() {
+		return Lists.newArrayList(SAB_PLAYERS.values());
+	}
+
 }

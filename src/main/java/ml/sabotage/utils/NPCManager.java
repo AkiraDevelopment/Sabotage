@@ -7,14 +7,15 @@ import net.citizensnpcs.api.npc.MemoryNPCDataStore;
 import net.citizensnpcs.api.npc.NPC;
 import net.citizensnpcs.api.npc.NPCRegistry;
 import net.citizensnpcs.api.trait.trait.Equipment;
+import net.citizensnpcs.trait.SkinTrait;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.mcmonkey.sentinel.SentinelTrait;
-import org.mcmonkey.sentinel.integration.SentinelHealth;
 
 public class NPCManager {
 
@@ -28,14 +29,14 @@ public class NPCManager {
         ItemStack boots = player.getEquipment().getBoots();
         ItemStack currentItem = player.getEquipment().getItem(EquipmentSlot.HAND);
 
-        NPC npc = registry.createNPC(EntityType.PLAYER, playerName);
+        NPC npc = registry.createNPC(EntityType.PLAYER, player.getUniqueId(), 1, playerName + ChatColor.WHITE);
 
         npc.getOrAddTrait(Equipment.class).set(Equipment.EquipmentSlot.HELMET, helmet);
         npc.getOrAddTrait(Equipment.class).set(Equipment.EquipmentSlot.CHESTPLATE, chestplate);
         npc.getOrAddTrait(Equipment.class).set(Equipment.EquipmentSlot.LEGGINGS, leggings);
         npc.getOrAddTrait(Equipment.class).set(Equipment.EquipmentSlot.BOOTS, boots);
         npc.getOrAddTrait(Equipment.class).set(Equipment.EquipmentSlot.HAND, currentItem);
-        
+        npc.getOrAddTrait(SkinTrait.class).setSkinName(playerName);
         npc.getOrAddTrait(SentinelTrait.class);
         WanderGoal runaround = WanderGoal.builder(npc).xrange(30).build();
         npc.getDefaultGoalController().addGoal(runaround, 1);

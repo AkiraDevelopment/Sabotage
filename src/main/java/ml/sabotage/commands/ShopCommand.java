@@ -14,7 +14,6 @@ import org.bukkit.entity.Player;
 
 import ml.sabotage.Main;
 import ml.sabotage.game.roles.IngamePlayer;
-import ml.sabotage.game.roles.SHOP;
 import ml.sabotage.game.stages.Sabotage;
 import ml.zer0dasho.plumber.utils.Sprink;
 
@@ -55,30 +54,26 @@ public class ShopCommand implements CommandExecutor {
 	/**
 	 * Buys a shop item for the player.
 	 * NOTE - This will use their karma.
-	 * 
-	 * @param player
-	 * @param item
-	 * @throws Exception
+	 *
 	 */
 	public static void buy(Player player, Integer item) throws Exception {
         IngamePlayer ingamePlayer =  inIngame(player);
         
 		if(ingamePlayer != null) {		
-	        List<Method> shop = getAnnotatedMethods(ingamePlayer.getClass(), SHOP.class);
-	        shop.get(item - 1).invoke(ingamePlayer, new Object[0]);
+	        List<Method> shop = getAnnotatedMethods(ingamePlayer.getClass());
+	        shop.get(item - 1).invoke(ingamePlayer);
 		}
 	}
 	
 	/**
 	 * Lists shop items for the player.
-	 * 
-	 * @param player
+	 *
 	 */
 	public static void list(Player player) {
         IngamePlayer ingamePlayer = inIngame(player);
         
 		if(ingamePlayer != null) {
-	        List<Method> shop = getAnnotatedMethods(ingamePlayer.getClass(), SHOP.class);
+	        List<Method> shop = getAnnotatedMethods(ingamePlayer.getClass());
 	        
 	        player.sendMessage(Sprink.color("&c&m--------&r &eShop &c&m---------"));
 	        shop.forEach(method -> {
@@ -92,11 +87,11 @@ public class ShopCommand implements CommandExecutor {
 	
 	/* API */
 
-    private static List<Method> getAnnotatedMethods(Class<?> clazz, Class<? extends Annotation> annotation0) {
+    private static List<Method> getAnnotatedMethods(Class<?> clazz) {
         List<Method> methods = new ArrayList<Method>();
         
         for(Method method : clazz.getMethods()) {
-        	Annotation annotation1 = method.getAnnotation(annotation0);
+        	Annotation annotation1 = method.getAnnotation((Class<? extends Annotation>) ml.sabotage.game.roles.SHOP.class);
         	if(annotation1 != null) methods.add(method);
         }
         

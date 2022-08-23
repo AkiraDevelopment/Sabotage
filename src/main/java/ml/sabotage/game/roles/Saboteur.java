@@ -1,12 +1,17 @@
 package ml.sabotage.game.roles;
 
+import ml.sabotage.game.managers.PlayerManager;
 import org.bukkit.Material;
+import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
 import ml.sabotage.Main;
 import ml.sabotage.config.ConfigSettings.Karma;
 import ml.sabotage.game.SabPlayer;
 import ml.zer0dasho.plumber.utils.Sprink;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class Saboteur extends IngamePlayer {
 	
@@ -18,7 +23,7 @@ public class Saboteur extends IngamePlayer {
 
     @Override
     public void sendRoleMessage(Detective detective) {
-        player.sendMessage(Sprink.color("&6You are a &c&lSaboteur &r&6 this game!"));
+        player.sendMessage(Sprink.color("&6You are a &c&lSaboteur &r&6this game!"));
         player.sendMessage(Sprink.color("&6Your job is to kill all the &aInnocent &6players and the &9Detective."));
         player.sendMessage(Sprink.color("&6The detective is &9") + detective.player.getName() + ".");
     }

@@ -12,6 +12,7 @@ import org.bukkit.World;
 import org.bukkit.block.Sign;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
@@ -178,48 +179,35 @@ public class Ingame implements Listener {
         
         return false;
     }
-    
-    private void initScoreboard() {
-    	playerManager.innocents(false).stream().forEach(igp -> {
-    		GUI.addPlayer(igp);
-    		//System.out.println(igp.player.getDisplayName());
-			//GUI.getInnocent().getTeam("Innocents").addEntry(igp.player.getName());
-			//GUI.getSaboteur().getTeam("Innocents").addEntry(igp.player.getName());
-			//GUI.getDetective().getTeam("Innocents").addEntry(igp.player.getName());
-			//GUI.getSpectator().getTeam("Else").addEntry(igp.player.getName());
 
-    		GUI.getInnocent().getTeam("Innocent").addPlayer(igp.player);
-    		GUI.getSaboteur().getTeam("Innocent").addPlayer(igp.player);
-    		GUI.getDetective().getTeam("Innocent").addPlayer(igp.player);
-    		GUI.getSpectator().getTeam("Else").addPlayer(igp.player);
-    	});
-    	
-    	playerManager.saboteurs(false).stream().forEach(igp -> {
-    		GUI.addPlayer(igp);
-    		//System.out.println(igp.player.getDisplayName());
-			//GUI.getInnocent().getTeam("Innocent").addEntry(igp.player.getName());
-			//GUI.getSaboteur().getTeam("Saboteur").addEntry(igp.player.getName());
-			//GUI.getDetective().getTeam("Innocent").addEntry(igp.player.getName());
-			//GUI.getSpectator().getTeam("Else").addEntry(igp.player.getName());
-    		GUI.getInnocent().getTeam("Innocent").addPlayer(igp.player);
-    		GUI.getSaboteur().getTeam("Saboteur").addPlayer(igp.player);
-    		GUI.getDetective().getTeam("Innocent").addPlayer(igp.player);
-    		GUI.getSpectator().getTeam("Else").addPlayer(igp.player);
-       	});
-   
-    	if(playerManager.getDetective() != null) {
-	    	GUI.addPlayer(playerManager.getDetective());
-	    	//System.out.println(playerManager.getDetective().player.getDisplayName());
-			//GUI.getInnocent().getTeam("Detective").addEntry(playerManager.getDetective().player.getName());
-			//GUI.getSaboteur().getTeam("Detective").addEntry(playerManager.getDetective().player.getName());
-			//GUI.getDetective().getTeam("Detective").addEntry(playerManager.getDetective().player.getName());
-			//GUI.getSpectator().getTeam("Detective").addEntry(playerManager.getDetective().player.getName());
+	private void initScoreboard() {
+		playerManager.innocents(false).stream().forEach(igp -> {
+			GUI.addPlayer(igp);
+
+			GUI.getInnocent().getTeam("Innocent").addPlayer(igp.player);
+			GUI.getSaboteur().getTeam("Innocent").addPlayer(igp.player);
+			GUI.getDetective().getTeam("Innocent").addPlayer(igp.player);
+			GUI.getSpectator().getTeam("Else").addPlayer(igp.player);
+		});
+
+		playerManager.saboteurs(false).stream().forEach(igp -> {
+			GUI.addPlayer(igp);
+
+			GUI.getInnocent().getTeam("Innocent").addPlayer(igp.player);
+			GUI.getSaboteur().getTeam("Saboteur").addPlayer(igp.player);
+			GUI.getDetective().getTeam("Innocent").addPlayer(igp.player);
+			GUI.getSpectator().getTeam("Else").addPlayer(igp.player);
+		});
+
+		if(playerManager.getDetective() != null) {
+			GUI.addPlayer(playerManager.getDetective());
+
 			GUI.getInnocent().getTeam("Detective").addPlayer(playerManager.getDetective().player);
 			GUI.getSaboteur().getTeam("Detective").addPlayer(playerManager.getDetective().player);
 			GUI.getDetective().getTeam("Detective").addPlayer(playerManager.getDetective().player);
 			GUI.getSpectator().getTeam("Detective").addPlayer(playerManager.getDetective().player);
-    	}
-    }
+		}
+	}
     
     /* Events */
     
@@ -395,7 +383,7 @@ public class Ingame implements Listener {
     	}
     }
     
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGHEST)
     public void deadChat(AsyncPlayerChatEvent e) {
 		if(!sabotage.players.contains(e.getPlayer().getUniqueId()))
 			return;
@@ -403,25 +391,29 @@ public class Ingame implements Listener {
     	IngamePlayer player = playerManager.getRole(e.getPlayer().getUniqueId());
     	
     	//IF PLAYER IS DEAD
-    	if(!playerManager.isAlive(e.getPlayer().getUniqueId())) { 
+    	if(!playerManager.isAlive(e.getPlayer().getUniqueId())) {
+			e.setCancelled(true);
     		List<Player> players = playerManager.dead().keySet().stream().map(Bukkit::getPlayer).collect(Collectors.toList());
-    		e.getRecipients().clear();
-    		e.getRecipients().addAll(players);
-    		e.setFormat(Sprink.color("&4[Dead] &7" + e.getPlayer().getDisplayName() + " &f" + e.getMessage()));
+    		players.forEach(p -> {
+				p.sendMessage(Sprink.color("&4[Dead] &7" + e.getPlayer().getDisplayName() + " &f" + e.getMessage()));
+			});
+
     	}
     	
     	//IF PLAYER IS ALIVE
     	else {
     		if(e.getMessage().startsWith("@")) {
     			if(player instanceof Saboteur) {
+					e.setCancelled(true);
     				List<Player> saboteurs = playerManager.saboteurs(true).stream().map(igp -> igp.player).collect(Collectors.toList());
-    				e.getRecipients().clear();
-    				e.getRecipients().addAll(saboteurs);
-    				e.setFormat(Sprink.color("&4[Saboteur] &c" + e.getPlayer().getName() + " &e" + e.getMessage().substring(1)));
+    				saboteurs.forEach(sab -> {
+						sab.sendMessage(Sprink.color("&4[Saboteur] &c" + e.getPlayer().getName() + " &e" + e.getMessage().substring(1)));
+					});
     			}
-    			
-    			else e.setCancelled(true);
     		}
+			if(player instanceof Detective){
+				e.setFormat(Sprink.color("&9&l" + e.getPlayer().getDisplayName() + " &8» &r" + e.getMessage()));
+			}
     	}
     }
 

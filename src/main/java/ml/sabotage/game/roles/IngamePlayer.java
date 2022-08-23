@@ -115,7 +115,7 @@ public abstract class IngamePlayer {
     @SHOP
     public void Panic_Kit() {
         if (hasKarma(40)) {
-            player.getInventory().addItem(new ItemStack[]{new ItemStack(Material.OAK_LEAVES, 5)});
+            player.getInventory().addItem(new ItemStack(Material.OAK_LEAVES, 5));
             player.sendMessage(Sprink.color("&aYou just bought a Panic Kit!"));
             sabPlayer.addKarma(-40);
         }

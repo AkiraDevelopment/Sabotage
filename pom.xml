@@ -32,6 +32,32 @@
 					<target>1.8</target>
 				</configuration>
 			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-shade-plugin</artifactId>
+				<version>3.3.0</version>
+				<executions>
+					<execution>
+						<phase>package</phase>
+						<goals>
+							<goal>shade</goal>
+						</goals>
+						<configuration>
+							<createDependencyReducedPom>false</createDependencyReducedPom>
+							<relocations>
+								<relocation>
+									<pattern>ml.zer0dasho.corpseimmortal</pattern>
+									<shadedPattern>ml.sabotage.libs.rosegarden</shadedPattern>
+								</relocation>
+								<relocation>
+									<pattern>ml.zer0dasho.config</pattern>
+									<shadedPattern>ml.sabotage.libs.gui</shadedPattern>
+								</relocation>
+							</relocations>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
 		</plugins>
 	</build>
 
@@ -84,13 +110,13 @@
 	    	<groupId>ml.zer0dasho</groupId>
 	  		<artifactId>corpseimmortal</artifactId>
 	 		<version>1.0.0</version>
-	 		<scope>provided</scope>
+	 		<scope>compile</scope>
     	</dependency>
     	<dependency>
 			<groupId>ml.zer0dasho</groupId>
 			<artifactId>config</artifactId>
 			<version>1.0.0</version>
-			<scope>provided</scope>
+			<scope>compile</scope>
 		</dependency>
 	</dependencies>
   

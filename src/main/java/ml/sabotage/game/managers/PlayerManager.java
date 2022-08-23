@@ -145,7 +145,7 @@ public class PlayerManager {
     	alive.clear();
     	
     	List<UUID> toAssign = Lists.newArrayList(players);
-        Integer neededSaboteurs = SabUtils.calcSabs(players.size());
+        int neededSaboteurs = SabUtils.calcSabs(players.size());
 
         while(toAssign.size() > 0) {
         	UUID id = Sprink.randomElement(toAssign, true);
@@ -161,13 +161,29 @@ public class PlayerManager {
         		Saboteur saboteur = resurrect(assignment, Saboteur::new);
         		saboteur.sendRoleMessage(detective);
         		neededSaboteurs--;
-        	} 
+        	}
         	
         	else {
         		Innocent innocent = resurrect(assignment, Innocent::new);
         		innocent.sendRoleMessage(detective);
         	}
         }
+        sendOtherSaboteurs();
+    }
+
+    public void sendOtherSaboteurs(){
+        saboteurs(true).forEach(igplayer -> {
+            StringBuilder result = new StringBuilder();
+            List<String> sabs = saboteurs(true).stream().map(igp -> igp.player.getName()).collect(Collectors.toList());
+            for(int i = 0; i < sabs.size(); i++) {
+                if(i == sabs.size() - 1) {
+                    if(sabs.size() != 1) result.append("and ");
+                    result.append(sabs.get(i)).append(".");
+                }
+                else result.append(sabs.get(i)).append(", ");
+            }
+            igplayer.player.sendMessage(Sprink.color("&6The saboteurs are " + result));
+        });
     }
     
     /**

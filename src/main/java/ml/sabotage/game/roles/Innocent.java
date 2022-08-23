@@ -16,7 +16,7 @@ public class Innocent extends IngamePlayer {
     }
     @Override
     public void sendRoleMessage(Detective detective) {
-        player.sendMessage(Sprink.color("&6You are an &a&lInnocent &r&6 this game!"));
+        player.sendMessage(Sprink.color("&6You are an &a&lInnocent &r&6this game!"));
         player.sendMessage(Sprink.color("&6Your job is to kill the &cSaboteurs."));
         player.sendMessage(Sprink.color("&6The detective is &9") + detective.player.getName() + ".");
     }
