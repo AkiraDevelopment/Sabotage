@@ -33,7 +33,7 @@ public class Innocent extends IngamePlayer {
     
 	@Override
 	public int karmaOnDeath() {
-		return ConfigManager.Setting.INNOCENT_DETECTIVE.getInt();
+		return ConfigManager.Setting.INNOCENT_DEATH.getInt();
 	}
 
     @SHOP
