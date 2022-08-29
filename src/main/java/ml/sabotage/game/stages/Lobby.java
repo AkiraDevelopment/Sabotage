@@ -5,6 +5,10 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.UUID;
 
+import ml.sabotage.command.sabotage.CommandSabotage;
+import ml.sabotage.game.managers.ConfigManager;
+import ml.sabotage.game.managers.VoteManager;
+import ml.sabotage.utils.SabUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.World;
@@ -18,9 +22,6 @@ import org.bukkit.event.entity.EntityDamageEvent;
 import com.google.common.collect.Sets;
 
 import ml.sabotage.Main;
-import ml.sabotage.commands.GenericCommands;
-import ml.sabotage.commands.Permissions;
-import ml.sabotage.commands.VoteCommand;
 import ml.sabotage.config.BookData;
 import ml.sabotage.game.SabArena;
 import ml.sabotage.game.gui.LobbyGui;
@@ -35,7 +36,7 @@ public class Lobby implements Listener {
     IArena hub;
     Timer timer;
     
-	private Sabotage sabotage;
+	private final Sabotage sabotage;
 	
     public final LobbyGui GUI;
     public final BookData bookData;
@@ -43,7 +44,7 @@ public class Lobby implements Listener {
     public Lobby(Sabotage sabotage) {
     	this.sabotage = sabotage; 
        	this.players = Sets.newHashSet();
-    	this.timer = Main.config.lobby.getTimer();
+    	this.timer = SabUtils.makeTimer(ConfigManager.Setting.LOBBY_HOURS.getInt(), ConfigManager.Setting.LOBBY_MINUTES.getInt(), ConfigManager.Setting.LOBBY_SECONDS.getInt());
        	this.GUI = new LobbyGui(timer, players);
     	this.bookData = BookData.load();
     }
@@ -76,15 +77,16 @@ public class Lobby implements Listener {
     }
     
     void start() throws IOException {
-    	VoteCommand.resetMapSelection();
+    	VoteManager voteManager = Main.getInstance().getManager(VoteManager.class);
+		voteManager.resetMapSelection();
 
-		this.hub = new SabArena(Main.config.hub);
+		this.hub = new SabArena(ConfigManager.Setting.HUB_WORLD_NAME.getString());
 		Main.CurrentMap = "Lobby";
     	sabotage.players.forEach(this::add);
     	
        	Trycat.Try(() -> sabotage.collection.map.delete(this.hub.getWorld()), (e) -> {});
      	
-    	Bukkit.getPluginManager().registerEvents(this, Main.plugin);
+    	Bukkit.getPluginManager().registerEvents(this, Main.getInstance());
     	this.timer.reset();
     }
     
@@ -93,7 +95,7 @@ public class Lobby implements Listener {
     }
     
     boolean run() {    	
-    	if(!GenericCommands.PAUSE && players.size() >= 3 && timer.tick()) {
+    	if(!CommandSabotage.PAUSE && players.size() >= 3 && timer.tick()) {
     		sabotage.endLobby();
     		return true;
     	}
@@ -109,7 +111,7 @@ public class Lobby implements Listener {
 		if(!sabotage.players.contains(e.getEntity().getUniqueId()))
 			return;
 		
-		if(e.getEntity().hasPermission(Permissions.NO_DAMAGE))
+		if(e.getEntity().hasPermission("zerodasho.sabotage.attributes.nodamage"))
 			e.setCancelled(true);
 	}
 	
@@ -117,8 +119,8 @@ public class Lobby implements Listener {
 	public void onBuild(BlockPlaceEvent e) {
 		if(!sabotage.players.contains(e.getPlayer().getUniqueId()))
 			return;
-		
-		if(!Main.SAB_PLAYERS.get(e.getPlayer().getUniqueId()).config.canBuild)
+
+		if(!Main.getInstance().canBuildPlayers.contains(e.getPlayer().getUniqueId()))
 			e.setCancelled(true);
 	}
 	

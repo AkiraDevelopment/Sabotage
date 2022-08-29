@@ -3,14 +3,17 @@ package ml.sabotage.game.roles;
 
 import java.util.Set;
 
+import ml.sabotage.Main;
+import ml.sabotage.command.sabotage.CommandSabotage;
+import ml.sabotage.game.managers.DataManager;
+import ml.sabotage.game.managers.LocaleManager;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
 import com.google.common.collect.Sets;
 
-import ml.sabotage.commands.GenericCommands;
-import ml.sabotage.config.PlayerData;
+import ml.sabotage.PlayerData;
 import ml.sabotage.game.SabPlayer;
 import ml.sabotage.game.tasks.Panic;
 import ml.zer0dasho.plumber.utils.Sprink;
@@ -20,7 +23,7 @@ public abstract class IngamePlayer {
     public double blood;
     public boolean timeout;
     
-    private Set<Panic> panics;
+    private final Set<Panic> panics;
 
     public final Player player;
     public final SabPlayer sabPlayer;
@@ -32,59 +35,39 @@ public abstract class IngamePlayer {
     }
 
     public String getBloodMessage() {
-    	String result = null;
-    	
-        switch((int)blood) {
-        	case 0:
-        		result = "&bThis player is clean";
-        		break;
-        	case 1:
-        		result = "&bYou notice a few drops of blood, but nothing to be suspicious about";
-        		break;
-        	case 2:
-        		result = "&bYou notice blood on their sleeve. Maybe you should keep an eye out...";
-        		break;
-        	case 3:
-        		result = "&bThis player is covered in blood - Did they just kill someone?";
-        		break;
-        	default:
-        		result = "&bThey're drenched in blood - How many people have they killed?";
-        		break;
-        }
-        
+        LocaleManager localeManager = Main.getInstance().getManager(LocaleManager.class);
+    	String result = switch ((int) blood) {
+            case 0, 1, 2, 3 -> localeManager.getLocaleMessage("blood-" + (int)blood);
+            default -> localeManager.getLocaleMessage("blood-4");
+        };
+
         return Sprink.color(result);
     }
 
     public void kill(IngamePlayer victim) {
+        DataManager dataManager = Main.getInstance().getManager(DataManager.class);
     	if(victim == null) return;
     	
         int delta = determineKarma(victim);
         this.sabPlayer.addKarma(delta);
         
-        PlayerData data = sabPlayer.config;
-       
-        if(delta < 0) 
-        	data.wrong_kills += 1;
-        else 
-        	data.correct_kills += 1;
-        
-        data.kills += 1;
+        PlayerData data = dataManager.getPlayerData(victim.player.getUniqueId());
+        if(delta < 0){
+            data.addIncorrectKill();
+        }else{
+            data.addCorrectKill();
+        }
+        data.addKill();
         data.save();  
     }
 
     public void die(IngamePlayer killer) {
-    	PlayerData data = sabPlayer.config;
-    	
+        DataManager dataManager = Main.getInstance().getManager(DataManager.class);
+    	PlayerData data = dataManager.getPlayerData(this.player.getUniqueId());
         if(killer != null) {
-            int delta = killer.determineKarma(this);
-            
-            if(delta < 0) 
-            	data.wrong_deaths += 1;
-            else 
-            	data.correct_deaths += 1;
+            killer.determineKarma(this);
+            data.addDeath();
         }
-       
-        data.deaths += 1;
         sabPlayer.addKarma(karmaOnDeath());
         data.save();
     }
@@ -96,7 +79,9 @@ public abstract class IngamePlayer {
     public abstract int determineKarma(IngamePlayer ingamePlayer);
     
     public boolean hasKarma(int karma) {
-    	if(GenericCommands.TEST || sabPlayer.config.karma >= karma) 
+        DataManager dataManager = Main.getInstance().getManager(DataManager.class);
+        PlayerData data = dataManager.getPlayerData(player.getUniqueId());
+    	if(CommandSabotage.TEST || data.getKarma() >= karma)
     		return true;
     	
         sabPlayer.player.sendMessage(Sprink.color("&cYou don't have enough karma..."));

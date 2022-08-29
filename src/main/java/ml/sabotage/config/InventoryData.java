@@ -18,7 +18,7 @@ public class InventoryData extends Config {
 	public static InventoryData load() {
 		return Config.load(
 				InventoryData.class, 
-				new File(Main.DATA_FOLDER, "inventory.yml"), 
+				new File(Main.getInstance().getDataFolder(), "inventory.yml"),
 				YAMLFormat.FORMATTER,
 				() -> YAMLFormat.FORMATTER.write(new InventoryData()));
 	}

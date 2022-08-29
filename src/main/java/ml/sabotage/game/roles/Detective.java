@@ -1,12 +1,11 @@
 package ml.sabotage.game.roles;
 
+import ml.sabotage.game.managers.ConfigManager;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
-import ml.sabotage.Main;
-import ml.sabotage.config.ConfigSettings.Karma;
 import ml.sabotage.game.SabPlayer;
 import ml.zer0dasho.plumber.utils.Sprink;
 import ml.zer0dasho.plumber.utils.builders.ItemBuilder;
@@ -30,16 +29,16 @@ public class Detective extends IngamePlayer {
 
     @Override
     public int determineKarma(IngamePlayer victim) {
-    	Karma detective = Main.config.detective;
-        if(victim instanceof Innocent) return detective.innocent;
-        if(victim instanceof Saboteur) return detective.saboteur;
+
+        if(victim instanceof Innocent) return ConfigManager.Setting.DETECTIVE_INNOCENT.getInt();
+        if(victim instanceof Saboteur) return ConfigManager.Setting.DETECTIVE_SABOTEUR.getInt();
         
         return 0;
     }
     
 	@Override
 	public int karmaOnDeath() {
-		return Main.config.detective.death;
+		return ConfigManager.Setting.DETECTIVE_DEATH.getInt();
 	}
 
     @SHOP
@@ -47,7 +46,7 @@ public class Detective extends IngamePlayer {
         if(!hasKarma(40)) return;
         
         if(sabPlayer.player.hasPotionEffect(PotionEffectType.SPEED)) {
-        	sabPlayer.player.sendMessage(Sprink.color("&cYou already have speed...!"));
+            sabPlayer.player.sendMessage(Sprink.color("&cYou already have speed...!"));
         }else {
            player.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 600, 2));
            player.sendMessage(Sprink.color("&aYou just bought Speed II!"));

@@ -9,6 +9,8 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import dev.rosewood.rosegarden.RosePlugin;
+import dev.rosewood.rosegarden.manager.Manager;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
@@ -26,16 +28,15 @@ import ml.sabotage.game.roles.Saboteur;
 import ml.sabotage.utils.SabUtils;
 import ml.zer0dasho.plumber.utils.Sprink;
 
-public class PlayerManager {
+public class PlayerManager extends Manager {
 
     Detective detective;
     Map<UUID, IngamePlayer> roles = Maps.newHashMap();
     Map<UUID, IngamePlayer> alive = Maps.newHashMap();
-    
-    public PlayerManager(Collection<UUID> players) {
-    	this.assignRoles(players);
+    public PlayerManager(RosePlugin rosePlugin) {
+        super(rosePlugin);
     }
-    
+
     /**
      * Returns all players.
      * 
@@ -155,15 +156,11 @@ public class PlayerManager {
         		detective = resurrect(assignment, Detective::new);
         		detective.sendRoleMessage(detective);
         		detective.insight_limit = Math.min((players.size() - 3), 3);
-        	} 
-        	
-        	else if(neededSaboteurs > 0) {
+        	} else if(neededSaboteurs > 0) {
         		Saboteur saboteur = resurrect(assignment, Saboteur::new);
         		saboteur.sendRoleMessage(detective);
         		neededSaboteurs--;
-        	}
-        	
-        	else {
+        	} else {
         		Innocent innocent = resurrect(assignment, Innocent::new);
         		innocent.sendRoleMessage(detective);
         	}
@@ -174,7 +171,7 @@ public class PlayerManager {
     public void sendOtherSaboteurs(){
         saboteurs(true).forEach(igplayer -> {
             StringBuilder result = new StringBuilder();
-            List<String> sabs = saboteurs(true).stream().map(igp -> igp.player.getName()).collect(Collectors.toList());
+            List<String> sabs = saboteurs(true).stream().map(igp -> igp.player.getName()).toList();
             for(int i = 0; i < sabs.size(); i++) {
                 if(i == sabs.size() - 1) {
                     if(sabs.size() != 1) result.append("and ");
@@ -213,5 +210,19 @@ public class PlayerManager {
      */
     public IngamePlayer getRole(UUID uuid) {
     	return roles.get(uuid);
+    }
+
+    public void addPlayers(Collection<UUID> players) {
+        this.assignRoles(players);
+    }
+
+    @Override
+    public void reload() {
+
+    }
+
+    @Override
+    public void disable() {
+
     }
 }

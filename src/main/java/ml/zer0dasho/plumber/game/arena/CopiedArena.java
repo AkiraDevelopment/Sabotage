@@ -30,7 +30,7 @@ public class CopiedArena implements IArena {
 	 * 
 	 * @param name - Name of arena's (new/copied) world folder
 	 * @param source - Source world folder
-	 * @throws IOException
+	 * @throws IOException - If the source world folder is not found
 	 */
 	public CopiedArena(String name, File source) throws IOException {
 		FileUtils.copyDirectory(this.source = source, new File(Bukkit.getWorldContainer(), name));
@@ -62,7 +62,7 @@ public class CopiedArena implements IArena {
 				deleteNow(kickPlayersTo);
 			}
 			
-		}.runTaskLater(Main.plugin, 200L);
+		}.runTaskLater(Main.getInstance(), 200L);
 	}
 	
 	public void deleteNow(World kickPlayersTo) {
@@ -77,7 +77,7 @@ public class CopiedArena implements IArena {
 			Bukkit.unloadWorld(world, false);
 			FileUtils.forceDelete(worldFolder);
 		} catch (IOException ex) {
-			System.err.println(String.format("[Plumber] Failed to delete CopiedArena '%s'", world.getName()));
+			System.err.printf("[Plumber] Failed to delete CopiedArena '%s'%n", world.getName());
 			//ex.printStackTrace(System.err);
 		}
 	}

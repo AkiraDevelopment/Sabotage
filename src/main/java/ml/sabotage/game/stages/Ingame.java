@@ -1,8 +1,14 @@
 package ml.sabotage.game.stages;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
+import dev.rosewood.rosegarden.utils.HexUtils;
+import github.scarsz.discordsrv.DiscordSRV;
+import me.clip.placeholderapi.PlaceholderAPI;
+import ml.sabotage.command.sabotage.CommandSabotage;
+import ml.sabotage.game.managers.ConfigManager;
+import ml.sabotage.game.managers.DataManager;
+import ml.sabotage.utils.SabUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
@@ -24,11 +30,9 @@ import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.scoreboard.Team;
 
 import ml.sabotage.Main;
-import ml.sabotage.commands.GenericCommands;
-import ml.sabotage.config.PlayerData;
+import ml.sabotage.PlayerData;
 import ml.sabotage.game.SharedListener;
 import ml.sabotage.game.events.ResurrectionEvent;
 import ml.sabotage.game.events.SmiteEvent;
@@ -50,7 +54,6 @@ import ml.zer0dasho.plumber.utils.Sprink;
 
 public class Ingame implements Listener {
 
-    PlayerManager playerManager;
     Timer timer, refill;
     Tester tester;
     TestCorpse testCorpse;
@@ -62,20 +65,21 @@ public class Ingame implements Listener {
   
     public Ingame(Sabotage sabotage) {
     	this.sabotage = sabotage;
-    	this.timer = Main.config.ingame.getTimer();
-    	this.refill = Main.config.refill.getTimer();
+    	this.timer = SabUtils.makeTimer(ConfigManager.Setting.INGAME_HOURS.getInt(), ConfigManager.Setting.INGAME_MINUTES.getInt(), ConfigManager.Setting.INGAME_SECONDS.getInt());
+    	this.refill = SabUtils.makeTimer(ConfigManager.Setting.REFILL_HOURS.getInt(), ConfigManager.Setting.REFILL_MINUTES.getInt(), ConfigManager.Setting.REFILL_SECONDS.getInt());
     	this.GUI = new IngameGui(timer);
 
     	refill.onFinish = () -> sabotage.collection.mapManager.refill();
     }
     
     void start() {
-    	this.playerManager = new PlayerManager(sabotage.collection.players);
+		PlayerManager playerManager = Main.getInstance().getManager(PlayerManager.class);
+		playerManager.addPlayers(sabotage.collection.players);
     	this.rewarded = false;
 
     	this.initScoreboard();
     	
-    	Bukkit.getPluginManager().registerEvents(this, Main.plugin);
+    	Bukkit.getPluginManager().registerEvents(this, Main.getInstance());
     	this.timer.reset();
     	this.refill.reset();
     }
@@ -85,7 +89,7 @@ public class Ingame implements Listener {
     }
     
     boolean run() {
-    	if(!GenericCommands.PAUSE) {
+    	if(!CommandSabotage.PAUSE) {
     		if(checkDeath() || GUI.getTimer().tick()) {
     			sabotage.endIngame();
     			return true;
@@ -104,38 +108,42 @@ public class Ingame implements Listener {
      * @return List<IngamePlayer>
 	 */
     public List<IngamePlayer> innocents() {
+		PlayerManager playerManager = Main.getInstance().getManager(PlayerManager.class);
     	List<IngamePlayer> innocents = playerManager.innocents(true);
     	innocents.addAll(playerManager.detectives(true));
     	return innocents;
     }
     
     private void innocentsWin() {
+		PlayerManager playerManager = Main.getInstance().getManager(PlayerManager.class);
     	rewardWinners(innocents(), "&aInnocents win!");
         punishLosers(playerManager.saboteurs(true));
     }
     
     private void saboteursWin() {
+		PlayerManager playerManager = Main.getInstance().getManager(PlayerManager.class);
     	rewardWinners(playerManager.saboteurs(true), "&cSaboteurs win!");
     	punishLosers(innocents());
     }
     
     private void rewardWinners(List<IngamePlayer> winners, String message) {
         sabotage.broadcastAll(message);
-        
+		DataManager dataManager = Main.getInstance().getManager(DataManager.class);
         for(IngamePlayer ingamePlayer : winners) {
-        	PlayerData data = ingamePlayer.sabPlayer.config;
-        	data.wins += 1;
-        	ingamePlayer.sabPlayer.addKarma(40);
+        	PlayerData player = dataManager.getPlayerData(ingamePlayer.player.getUniqueId());
+			player.addWin();
+			player.save();
         }
         
         rewarded = true;
     }
 
     private void punishLosers(List<IngamePlayer> losers) {
+		DataManager dataManager = Main.getInstance().getManager(DataManager.class);
         for (IngamePlayer ingamePlayer : losers) {
-        	PlayerData data = ingamePlayer.sabPlayer.config;
-            data.losses += 1;
-            data.save();
+        	PlayerData player = dataManager.getPlayerData(ingamePlayer.player.getUniqueId());
+            player.addLoss();
+            player.save();
         }
     }
     
@@ -144,23 +152,24 @@ public class Ingame implements Listener {
     }
     
     private String getSaboteurList() {
+		PlayerManager playerManager = Main.getInstance().getManager(PlayerManager.class);
     	StringBuilder result = new StringBuilder();
-    	List<String> saboteurs = playerManager.saboteurs(false).stream().map(igp -> igp.player.getName()).collect(Collectors.toList());
+    	List<String> saboteurs = playerManager.saboteurs(false).stream().map(igp -> igp.player.getName()).toList();
     	
     	for(int i = 0; i < saboteurs.size(); i++) {
     		if(i == saboteurs.size() - 1) {
     			if(saboteurs.size() != 1) result.append("and ");
-    			result.append(saboteurs.get(i) + ".");
+    			result.append(saboteurs.get(i)).append(".");
     		}
-    		else result.append(saboteurs.get(i) + ", ");
+    		else result.append(saboteurs.get(i)).append(", ");
     	}
     	
     	return result.toString();
     }
 
     private boolean checkDeath() {
-    	
-    	if(GenericCommands.TEST)
+		PlayerManager playerManager = Main.getInstance().getManager(PlayerManager.class);
+    	if(CommandSabotage.TEST)
     		return false;
  
     	List<IngamePlayer> innocents = innocents();
@@ -181,7 +190,8 @@ public class Ingame implements Listener {
     }
 
 	private void initScoreboard() {
-		playerManager.innocents(false).stream().forEach(igp -> {
+		PlayerManager playerManager = Main.getInstance().getManager(PlayerManager.class);
+		playerManager.innocents(false).forEach(igp -> {
 			GUI.addPlayer(igp);
 
 			GUI.getInnocent().getTeam("Innocent").addPlayer(igp.player);
@@ -190,7 +200,7 @@ public class Ingame implements Listener {
 			GUI.getSpectator().getTeam("Else").addPlayer(igp.player);
 		});
 
-		playerManager.saboteurs(false).stream().forEach(igp -> {
+		playerManager.saboteurs(false).forEach(igp -> {
 			GUI.addPlayer(igp);
 
 			GUI.getInnocent().getTeam("Innocent").addPlayer(igp.player);
@@ -245,7 +255,8 @@ public class Ingame implements Listener {
     
     @EventHandler
     public void droppedShears(PlayerDropItemEvent e) {
-		if(!this.playerManager.getDetective().player.equals(e.getPlayer()))
+		PlayerManager playerManager = Main.getInstance().getManager(PlayerManager.class);
+		if(!playerManager.getDetective().player.equals(e.getPlayer()))
 			return;
 		
     	SharedListener.droppedShears(e);
@@ -253,17 +264,16 @@ public class Ingame implements Listener {
     
     @EventHandler
     public void onDamage(EntityDamageEvent e) {
+		PlayerManager playerManager = Main.getInstance().getManager(PlayerManager.class);
     	if(!sabotage.players.contains(e.getEntity().getUniqueId()))
     		return;
     	
     	if(rewarded)
     		e.setCancelled(true);
     	
-    	else if(e.getEntity() instanceof Player && this.playerManager.isAlive(e.getEntity().getUniqueId())) {
-    		
-    		Player p = (Player) e.getEntity();
-	    	
-    		/* Player died */
+    	else if(e.getEntity() instanceof Player p && playerManager.isAlive(e.getEntity().getUniqueId())) {
+
+			/* Player died */
     		if(p.getHealth() - e.getFinalDamage() <= 0) {
 	    		p.setHealth(20.0);
 	        	sabotage.broadcastAll(Sprink.color("&cA player has died... " + (playerManager.players(true).size() - 1) + " players remain."));
@@ -274,6 +284,7 @@ public class Ingame implements Listener {
 
     @EventHandler
     public void onCorpseClick(CorpseOpenInventoryEvent e) {
+		PlayerManager playerManager = Main.getInstance().getManager(PlayerManager.class);
     	if(!sabotage.players.contains(e.getClicker().getUniqueId()))
     		return;
     	
@@ -288,7 +299,7 @@ public class Ingame implements Listener {
     	if(clicker instanceof Detective && e.getClicker().getInventory().getItemInMainHand().getType().equals(Material.SHEARS) && corpse != null) {
     		if(testCorpse == null) {
     			this.testCorpse = new TestCorpse(this,corpse,e.getCorpse().getBody().getStoredLocation());
-    			this.testCorpse.runTaskTimer(Main.plugin, 0L, 20L);
+    			this.testCorpse.runTaskTimer(Main.getInstance(), 0L, 20L);
     		}
    
     		e.setCancelled(true);
@@ -296,13 +307,14 @@ public class Ingame implements Listener {
     }
     
     @EventHandler
-    public void onRightClickPlayer(PlayerInteractEntityEvent e) {    	
+    public void onRightClickPlayer(PlayerInteractEntityEvent e) {
+		PlayerManager playerManager = Main.getInstance().getManager(PlayerManager.class);
         IngamePlayer clicker = playerManager.getRole(e.getPlayer().getUniqueId());
         IngamePlayer clicked = playerManager.getRole(e.getRightClicked().getUniqueId());
         ItemStack item = e.getPlayer().getInventory().getItemInMainHand();
         
         if(clicker == null || clicked == null) return;
-        if(item.getType().equals(Material.AIR) || !this.playerManager.isAlive(e.getPlayer().getUniqueId())) return;
+        if(item.getType().equals(Material.AIR) || !playerManager.isAlive(e.getPlayer().getUniqueId())) return;
         
         switch(item.getType()) {
 	        case GLASS_BOTTLE:
@@ -310,10 +322,9 @@ public class Ingame implements Listener {
 	        	break;
 	        	
 	        case SHEARS:
-	        	if(clicker instanceof Detective) {
-		            Detective det = (Detective) clicker;
-		            
-		            if (det.insight) {
+	        	if(clicker instanceof Detective det) {
+
+					if (det.insight) {
 			            e.getPlayer().sendMessage(Sprink.color("&e" + clicked.player.getName() + " &eis ") + clicked.getRole());
 			            det.insight = false;
 		            }
@@ -327,13 +338,14 @@ public class Ingame implements Listener {
     }
     
     @EventHandler
-    public void onPlayerHit(EntityDamageByEntityEvent e) { 
-    	if(!sabotage.players.contains(e.getEntity().getUniqueId()) || !this.playerManager.isAlive(e.getEntity().getUniqueId()))
+    public void onPlayerHit(EntityDamageByEntityEvent e) {
+		PlayerManager playerManager = Main.getInstance().getManager(PlayerManager.class);
+    	if(!sabotage.players.contains(e.getEntity().getUniqueId()) || !playerManager.isAlive(e.getEntity().getUniqueId()))
     		return;
     	
     	IngamePlayer damager = playerManager.getRole(e.getDamager().getUniqueId());
 
-		if(damager != null && this.playerManager.isAlive(damager.player.getUniqueId())) {
+		if(damager != null && playerManager.isAlive(damager.player.getUniqueId())) {
 		    double result = damager.blood < 2.0 ? 0.2 : 0.0;
 	        damager.blood += result;
 		}
@@ -341,6 +353,7 @@ public class Ingame implements Listener {
     
     @EventHandler
     public void blockPlace(BlockPlaceEvent e) {
+		PlayerManager playerManager = Main.getInstance().getManager(PlayerManager.class);
 		if(!sabotage.players.contains(e.getPlayer().getUniqueId()))
 			return;
 		
@@ -360,7 +373,7 @@ public class Ingame implements Listener {
 	            	e.setCancelled(true);
 	            
 	            else 
-	            	new Panic(placer, e.getBlock().getLocation()).runTaskTimer(Main.plugin, 0L, 20L);
+	            	new Panic(placer, e.getBlock().getLocation()).runTaskTimer(Main.getInstance(), 0L, 20L);
         }
         
         else SharedListener.onBlockPlace(e);
@@ -369,6 +382,7 @@ public class Ingame implements Listener {
     
     @EventHandler
     public void onClick(PlayerInteractEvent e) {
+		PlayerManager playerManager = Main.getInstance().getManager(PlayerManager.class);
 		if(!sabotage.players.contains(e.getPlayer().getUniqueId()) || !playerManager.isAlive(e.getPlayer().getUniqueId()))
 			return;
     	
@@ -384,16 +398,15 @@ public class Ingame implements Listener {
     }
     
     @EventHandler(priority = EventPriority.HIGHEST)
-    public void deadChat(AsyncPlayerChatEvent e) {
+    public void Chat(AsyncPlayerChatEvent e) {
+		PlayerManager playerManager = Main.getInstance().getManager(PlayerManager.class);
 		if(!sabotage.players.contains(e.getPlayer().getUniqueId()))
 			return;
-    	
+		e.setCancelled(true);
     	IngamePlayer player = playerManager.getRole(e.getPlayer().getUniqueId());
-    	
     	//IF PLAYER IS DEAD
     	if(!playerManager.isAlive(e.getPlayer().getUniqueId())) {
-			e.setCancelled(true);
-    		List<Player> players = playerManager.dead().keySet().stream().map(Bukkit::getPlayer).collect(Collectors.toList());
+    		List<Player> players = playerManager.dead().keySet().stream().map(Bukkit::getPlayer).toList();
     		players.forEach(p -> {
 				p.sendMessage(Sprink.color("&4[Dead] &7" + e.getPlayer().getDisplayName() + " &f" + e.getMessage()));
 			});
@@ -404,23 +417,31 @@ public class Ingame implements Listener {
     	else {
     		if(e.getMessage().startsWith("@")) {
     			if(player instanceof Saboteur) {
-					e.setCancelled(true);
-    				List<Player> saboteurs = playerManager.saboteurs(true).stream().map(igp -> igp.player).collect(Collectors.toList());
+    				List<Player> saboteurs = playerManager.saboteurs(true).stream().map(igp -> igp.player).toList();
     				saboteurs.forEach(sab -> {
 						sab.sendMessage(Sprink.color("&4[Saboteur] &c" + e.getPlayer().getName() + " &e" + e.getMessage().substring(1)));
 					});
-    			}
+    			}else{
+					e.getPlayer().sendMessage(Sprink.color("&4Only Saboteurs can use this :)"));
+				}
     		}
-			if(player instanceof Detective){
-				e.setFormat(Sprink.color("&9&l" + e.getPlayer().getDisplayName() + " &8» &r" + e.getMessage()));
-			}
     	}
-    }
+		Player plyr = e.getPlayer();
+		Bukkit.getOnlinePlayers().forEach(p -> {
+			String chatFormat = PlaceholderAPI.setRelationalPlaceholders(plyr, p, ConfigManager.Setting.CHAT_FORMAT.getString());
+			chatFormat = PlaceholderAPI.setPlaceholders(plyr, chatFormat);
+			HexUtils.sendMessage(p, chatFormat.replace("%message%", e.getMessage()));
+		});
+		if(Main.getInstance().getServer().getPluginManager().isPluginEnabled("DiscordSRV")) {
+			DiscordSRV.getPlugin().processChatMessage(e.getPlayer(), e.getMessage(), "global", false);
+		}
+	}
 
     public void doCompass(PlayerInteractEvent e) {
+		PlayerManager playerManager = Main.getInstance().getManager(PlayerManager.class);
         IngamePlayer tracker = playerManager.getRole(e.getPlayer().getUniqueId());
         
-        if(this.getPlayerManager().isAlive(e.getPlayer().getUniqueId())) 
+        if(playerManager.isAlive(e.getPlayer().getUniqueId()))
         	return;
         
         Player target = null;
@@ -429,10 +450,12 @@ public class Ingame implements Listener {
         	Player player = igp.player;
         	
             if(player.equals(e.getPlayer())) {
+				return;
 			}
             else if(target == null) 
             	target = player;
             else if(target.getLocation().distance(tracker.player.getLocation()) <= player.getPlayer().getLocation().distance(tracker.player.getLocation())) {
+			return;
 			}
             else 
             	target = player;
@@ -445,6 +468,7 @@ public class Ingame implements Listener {
     }
     
     private void test(PlayerInteractEvent e) {
+		PlayerManager playerManager = Main.getInstance().getManager(PlayerManager.class);
 		if(!sabotage.players.contains(e.getPlayer().getUniqueId()))
 			return;
 
@@ -452,18 +476,18 @@ public class Ingame implements Listener {
     	if(clicker == null || !playerManager.isAlive(e.getPlayer().getUniqueId())) 
     		return;
     	
-    	if(e.getClickedBlock().getState() instanceof Sign) {
-            Sign sign = (Sign) e.getClickedBlock().getState();
-            
-            if(!sign.getLine(0).contains("[Test]") || this.tester != null) 
+    	if(e.getClickedBlock().getState() instanceof Sign sign) {
+
+			if(!sign.getLine(0).contains("[Test]") || this.tester != null)
             	return;
             
             this.tester = new Tester(sabotage.collection.mapManager, clicker);
-            this.tester.runTaskTimer(Main.plugin, 0L, 20L);
+            this.tester.runTaskTimer(Main.getInstance(), 0L, 20L);
         }
     }
 
-    private void kill2(Player dead) {   
+    private void kill2(Player dead) {
+		PlayerManager playerManager = Main.getInstance().getManager(PlayerManager.class);
 		if(!sabotage.players.contains(dead.getUniqueId()))
 			return;
 		
@@ -501,10 +525,6 @@ public class Ingame implements Listener {
     public World getWorld() {
     	return this.sabotage.collection.map.getWorld();
     }
-
-	public PlayerManager getPlayerManager() {
-		return playerManager;
-	}
 
 	public boolean isRewarded() {
 		return rewarded;

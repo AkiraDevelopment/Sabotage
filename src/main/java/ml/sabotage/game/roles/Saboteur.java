@@ -1,17 +1,11 @@
 package ml.sabotage.game.roles;
 
-import ml.sabotage.game.managers.PlayerManager;
+import ml.sabotage.game.managers.ConfigManager;
 import org.bukkit.Material;
-import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
-import ml.sabotage.Main;
-import ml.sabotage.config.ConfigSettings.Karma;
 import ml.sabotage.game.SabPlayer;
 import ml.zer0dasho.plumber.utils.Sprink;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 public class Saboteur extends IngamePlayer {
 	
@@ -30,23 +24,22 @@ public class Saboteur extends IngamePlayer {
 
     @Override
     public int determineKarma(IngamePlayer victim) {
-    	Karma karma = Main.config.saboteur;
-        if(victim instanceof Innocent) return karma.innocent;
-        if(victim instanceof Saboteur) return karma.saboteur;
-        if(victim instanceof Detective) return karma.detective;
+        if(victim instanceof Innocent) return ConfigManager.Setting.SABOTEUR_INNOCENT.getInt();
+        if(victim instanceof Saboteur) return ConfigManager.Setting.SABOTEUR_SABOTEUR.getInt();
+        if(victim instanceof Detective) return ConfigManager.Setting.SABOTEUR_DETECTIVE.getInt();
         
         return 0;
     }
     
 	@Override
 	public int karmaOnDeath() {
-		return Main.config.saboteur.death;
+		return ConfigManager.Setting.SABOTEUR_DEATH.getInt();
 	}
     
     @SHOP
     public void Surprise_Chest() {
         if (hasKarma(30)) {
-            player.getInventory().addItem(new ItemStack[]{new ItemStack(Material.CHEST, 1)});
+            player.getInventory().addItem(new ItemStack(Material.CHEST, 1));
             player.sendMessage(Sprink.color("&aYou just bought a Surprise Chest!"));
             sabPlayer.addKarma(-30);
         }

@@ -1,6 +1,7 @@
 package ml.sabotage.game.tasks;
 
-import ml.sabotage.Main;
+import ml.sabotage.game.managers.ConfigManager;
+import ml.sabotage.utils.SabUtils;
 import ml.zer0dasho.plumber.game.Timer;
 import net.citizensnpcs.api.npc.NPC;
 import org.bukkit.entity.Player;
@@ -15,7 +16,7 @@ public class Illusion extends BukkitRunnable {
 
     public Illusion(Player p) {
 
-        this.life = Main.config.mirror_illusion.getTimer();
+        this.life = SabUtils.makeTimer(ConfigManager.Setting.MIRROR_ILLUSION_HOURS.getInt(), ConfigManager.Setting.MIRROR_ILLUSION_MINUTES.getInt(), ConfigManager.Setting.MIRROR_ILLUSION_SECONDS.getInt());
         illusion = createFakePlayer(p.getName(), p.getLocation());
 
     }

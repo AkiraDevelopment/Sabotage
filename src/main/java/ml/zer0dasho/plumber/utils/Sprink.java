@@ -1,11 +1,7 @@
 package ml.zer0dasho.plumber.utils;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.concurrent.ThreadLocalRandom;
 
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -22,10 +18,7 @@ public class Sprink {
 	/**
 	 * Retrieves the most frequent value of a map.
 	 * You can use this to implement voting systems.
-	 * 
-	 * @param <K>
-	 * @param <V>
-	 * @param map
+	 * @param map The map to get the most frequent value of.
 	 */
     public static <K,V> V mostFrequentValue(Map<K,V> map) {
     	Collection<V> val = map.values();
@@ -36,13 +29,11 @@ public class Sprink {
     /**
      * Retrieves a random element from a list.
      * 
-     * @param <T>
-     * @param list
      * @param remove - if true, it removes the random element from the list
      */
     public static <T> T randomElement(Collection<T> list, boolean remove) {
     	@SuppressWarnings("unchecked")
-		T element = (T) list.toArray()[ThreadLocalRandom.current().nextInt(list.size())];
+			T element = (T) list.toArray()[new Random().nextInt(list.size())];
     	
     	if(remove)    		
     		list.remove(element);
@@ -53,15 +44,14 @@ public class Sprink {
 	/**
 	 * Parses an Object as a Number.
 	 * If the provided Object isn't an instance of Number, this returns -1.
-	 * 
-	 * @param object
+	 *
 	 */
 	public static Number number(Object object) {
-		if(object instanceof Double)  return Double.valueOf((double)object);
-		if(object instanceof Float)   return Float.valueOf((float)object);
-		if(object instanceof Integer) return Integer.valueOf((int)object);
+		if(object instanceof Double)  return (double) object;
+		if(object instanceof Float)   return (float) object;
+		if(object instanceof Integer) return (int) object;
 
-		return Integer.valueOf(-1);
+		return -1;
 	}
     
 	/**
@@ -77,8 +67,7 @@ public class Sprink {
 	 * @param list - List of strings to encode
 	 */
 	public static List<String> color(List<String> list) {
-		for(int i = 0; i < list.size(); i++)
-			list.set(i, color(list.get(i)));
+		list.replaceAll(Sprink::color);
 		
 		return list;
 	}
@@ -97,7 +86,6 @@ public class Sprink {
 	/**
 	 * Clears a player's inventory.
 	 * 
-	 * @param player
 	 * @param removeArmor - if true, the player's armor is also removed.
 	 */
     public static void clearInventory(Player player, boolean removeArmor) {
@@ -107,19 +95,16 @@ public class Sprink {
     
     /**
      * Removes potion effects from a player.
-     * 
-     * @param player
-     */
+     *
+	 */
     public static void clearEffects(Player player) {
     	player.getActivePotionEffects().forEach(effect -> player.removePotionEffect(effect.getType()));
     }
     
     /**
      * Same as 'new ItemBuilder(material)'
-     * 
-     * @param material
-     * @return
-     */
+     *
+	 */
     public static ItemBuilder itemBuilder(Material material) {
     	return new ItemBuilder(material);
     }

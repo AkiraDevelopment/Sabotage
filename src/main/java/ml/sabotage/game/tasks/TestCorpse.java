@@ -1,5 +1,8 @@
 package ml.sabotage.game.tasks;
 
+import ml.sabotage.game.managers.ConfigManager;
+import ml.sabotage.game.managers.PlayerManager;
+import ml.sabotage.utils.SabUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
@@ -23,11 +26,12 @@ public class TestCorpse extends BukkitRunnable {
 	public Detective detective;
 	
 	public TestCorpse(Ingame ingame, IngamePlayer corpse, Location location) {
+		PlayerManager playerManager = Main.getInstance().getManager(PlayerManager.class);
 		this.ingame = ingame;
 		this.corpse = corpse;
 		this.location = location;
-		this.timer = Main.config.corpse_tester.getTimer();
-		this.detective = ingame.getPlayerManager().getDetective();
+		this.timer = SabUtils.makeTimer(ConfigManager.Setting.CORPSE_TESTER_HOURS.getInt(), ConfigManager.Setting.CORPSE_TESTER_MINUTES.getInt(), ConfigManager.Setting.CORPSE_TESTER_SECONDS.getInt());
+		this.detective = playerManager.getDetective();
 		
 		Main.sabotage.broadcastAll(Sprink.color("&9" + detective.player.getName() + " &eis now testing the body of &7" + corpse.player.getName()));
 	}
@@ -36,8 +40,8 @@ public class TestCorpse extends BukkitRunnable {
 	public void run() {
 		Player player = detective.player;
 		
-		if(Main.config.test_corpse_range != -1 && player.getLocation().distance(location) > Main.config.test_corpse_range) {
-			player.sendMessage(Sprink.color("&cYou need to stand by the corpse for " + Main.config.tester.seconds + " seconds!"));
+		if(ConfigManager.Setting.TEST_CORPSE_RANGE.getInt() != -1 && player.getLocation().distance(location) > ConfigManager.Setting.TEST_CORPSE_RANGE.getInt()) {
+			player.sendMessage(Sprink.color("&cYou need to stand by the corpse for " + ConfigManager.Setting.CORPSE_TESTER_SECONDS.getInt() + " seconds!"));
 			Bukkit.getPluginManager().callEvent(new TestCorpseEvent(this));
 			this.cancel();
 		}

@@ -3,14 +3,12 @@
 	
   	<groupId>ml.sabotage</groupId>
  	<artifactId>sabotage</artifactId>
- 	<version>1.0.1</version>
+ 	<version>1.0.2</version>
 	<packaging>jar</packaging>
 
 	<properties>
-	     <maven.compiler.source>1.8</maven.compiler.source>
-	     <maven.compiler.target>1.8</maven.compiler.target>
+		<java.version>17</java.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 	</properties>
 
 	<build>
@@ -28,8 +26,8 @@
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>3.8.0</version>
 				<configuration>
-					<source>1.8</source>
-					<target>1.8</target>
+					<source>17</source>
+					<target>17</target>
 				</configuration>
 			</plugin>
 			<plugin>
@@ -43,17 +41,13 @@
 							<goal>shade</goal>
 						</goals>
 						<configuration>
-							<createDependencyReducedPom>false</createDependencyReducedPom>
 							<relocations>
 								<relocation>
-									<pattern>ml.zer0dasho.corpseimmortal</pattern>
+									<pattern>dev.rosewood.rosegarden</pattern>
 									<shadedPattern>ml.sabotage.libs.rosegarden</shadedPattern>
 								</relocation>
-								<relocation>
-									<pattern>ml.zer0dasho.config</pattern>
-									<shadedPattern>ml.sabotage.libs.gui</shadedPattern>
-								</relocation>
 							</relocations>
+							<createDependencyReducedPom>false</createDependencyReducedPom>
 						</configuration>
 					</execution>
 				</executions>
@@ -78,6 +72,19 @@
 			<id>placeholderapi</id>
 			<url>https://repo.extendedclip.com/content/repositories/placeholderapi/</url>
 		</repository>
+		<repository>
+			<id>rosewood-repo</id>
+			<url>https://repo.rosewooddev.io/repository/public/</url>
+		</repository>
+		<repository>
+			<id>dv8tion</id>
+			<name>m2-dv8tion</name>
+			<url>https://m2.dv8tion.net/releases</url>
+		</repository>
+		<repository>
+			<id>Scarsz-Nexus</id>
+			<url>https://nexus.scarsz.me/content/groups/public/</url>
+		</repository>
 	</repositories>
 
  	<dependencies>
@@ -90,9 +97,15 @@
 		<dependency>
 			<groupId>org.mcmonkey</groupId>
 			<artifactId>sentinel</artifactId>
-			<version>2.5.0-SNAPSHOT</version>
+			<version>2.7.0-SNAPSHOT</version>
 			<type>jar</type>
 			<scope>provided</scope>
+			<exclusions>
+				<exclusion>
+					<groupId>*</groupId>
+					<artifactId>*</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>me.clip</groupId>
@@ -110,13 +123,25 @@
 	    	<groupId>ml.zer0dasho</groupId>
 	  		<artifactId>corpseimmortal</artifactId>
 	 		<version>1.0.0</version>
-	 		<scope>compile</scope>
+	 		<scope>provided</scope>
     	</dependency>
     	<dependency>
 			<groupId>ml.zer0dasho</groupId>
 			<artifactId>config</artifactId>
 			<version>1.0.0</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>dev.rosewood</groupId>
+			<artifactId>rosegarden</artifactId>
+			<version>1.1.0.42-SNAPSHOT</version>
 			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.discordsrv</groupId>
+			<artifactId>discordsrv</artifactId>
+			<version>1.25.0</version>
+			<scope>provided</scope>
 		</dependency>
 	</dependencies>
   

@@ -1,10 +1,11 @@
 package ml.sabotage.game.tasks;
 
+import ml.sabotage.game.managers.ConfigManager;
+import ml.sabotage.utils.SabUtils;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.scheduler.BukkitRunnable;
 
-import ml.sabotage.Main;
 import ml.sabotage.game.roles.IngamePlayer;
 import ml.zer0dasho.plumber.game.Timer;
 
@@ -17,13 +18,13 @@ public class Panic extends BukkitRunnable {
 
     public Panic(IngamePlayer ingamePlayer, Location location) {
     	
-    	this.life = Main.config.panic_life.getTimer();
+    	this.life = SabUtils.makeTimer(ConfigManager.Setting.PANIC_LIFE_HOURS.getInt(), ConfigManager.Setting.PANIC_LIFE_MINUTES.getInt(), ConfigManager.Setting.PANIC_LIFE_SECONDS.getInt());
         this.ingamePlayer = ingamePlayer;
         this.location = location;
         
         location.getBlock().setType(Material.OAK_LEAVES);
         
-        if(ingamePlayer.getPanics() >= Main.config.max_panic_blocks)
+        if(ingamePlayer.getPanics() >= ConfigManager.Setting.MAX_PANIC_BLOCKS.getInt())
 			ingamePlayer.timeout = true;
         
         ingamePlayer.addPanic(this);

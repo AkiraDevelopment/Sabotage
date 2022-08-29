@@ -1,9 +1,12 @@
 package ml.sabotage.game.stages;
 
 import java.util.Collections;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
+import ml.sabotage.game.managers.ConfigManager;
+import ml.sabotage.game.managers.PlayerManager;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
@@ -22,7 +25,6 @@ import org.bukkit.util.Vector;
 import com.google.common.collect.Sets;
 
 import ml.sabotage.Main;
-import ml.sabotage.commands.Permissions;
 import ml.sabotage.game.SabPlayer;
 import ml.zer0dasho.plumber.utils.Sprink;
 import ml.zer0dasho.plumber.utils.Trycat;
@@ -40,66 +42,48 @@ public class Sabotage extends BukkitRunnable implements Listener {
 		this.players = Sets.newHashSet();
 		
 		this.lobby = new Lobby(this);
-		Trycat.Try(() -> lobby.start(), (ex) -> ex.printStackTrace());
+		Trycat.Try(() -> lobby.start(), Throwable::printStackTrace);
 		
-		this.runTaskTimer(Main.plugin, 0L, 20L);
-		Bukkit.getPluginManager().registerEvents(this, Main.plugin);
+		this.runTaskTimer(Main.getInstance(), 0L, 20L);
+		Bukkit.getPluginManager().registerEvents(this, Main.getInstance());
 	}
 	
 	@Override
 	public void run() {
-		switch(this.current_state) {
-			case LOBBY:
-				lobby.run();
-				break;
-				
-			case COLLECTION:
-				collection.run();
-				break;
-				
-			case INGAME:
-				ingame.run();
-				break;
+		switch (this.current_state) {
+			case LOBBY -> lobby.run();
+			case COLLECTION -> collection.run();
+			case INGAME -> ingame.run();
 		}
 	}	
 	
 	public void broadcastAll(String msg) {
 		String colorMsg = Sprink.color(msg);
-		players.stream().map(Bukkit::getPlayer).forEach(player -> player.sendMessage(colorMsg));
+		players.stream().map(Bukkit::getPlayer).filter(Objects::nonNull).forEach(player -> player.sendMessage(colorMsg));
 	}
 	
 	public void add(Player player) {
+		PlayerManager playerManager = Main.getInstance().getManager(PlayerManager.class);
 		if(players.contains(player.getUniqueId()))
 			return;
 		
 		players.add(player.getUniqueId());
-		
-		switch(current_state) {
-			case LOBBY:
-				lobby.add(player);
-				break;
-			case COLLECTION:
-				collection.add(player);
-				break;
-			case INGAME:
-				ingame.getPlayerManager().smite(player);
-				break;
+
+		switch (current_state) {
+			case LOBBY -> lobby.add(player);
+			case COLLECTION -> collection.add(player);
+			case INGAME -> playerManager.smite(player);
 		}
 	}
 	
 	public void remove(Player player) {
+		PlayerManager playerManager = Main.getInstance().getManager(PlayerManager.class);
 		players.remove(player.getUniqueId());
-		
-		switch(current_state) {
-			case LOBBY:
-				lobby.remove(player);
-				break;
-			case COLLECTION:
-				collection.remove(player);
-				break;
-			case INGAME:
-				ingame.getPlayerManager().smite(player);
-				break;
+
+		switch (current_state) {
+			case LOBBY -> lobby.remove(player);
+			case COLLECTION -> collection.remove(player);
+			case INGAME -> playerManager.smite(player);
 		}
 		
 		player.setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard());
@@ -112,7 +96,7 @@ public class Sabotage extends BukkitRunnable implements Listener {
 			this.current_state = COLLECTION;
 			
 			this.collection = new Collection(this);
-			Trycat.Try(() -> collection.start(), (ex) -> ex.printStackTrace());
+			Trycat.Try(() -> collection.start(), Throwable::printStackTrace);
 		}
 	}
 	
@@ -122,7 +106,7 @@ public class Sabotage extends BukkitRunnable implements Listener {
 			this.current_state = INGAME;
 			
 			this.ingame = new Ingame(this);
-			Trycat.Try(() -> ingame.start(), (ex) -> ex.printStackTrace());
+			Trycat.Try(() -> ingame.start(), Throwable::printStackTrace);
 		}
 	}
 	
@@ -132,7 +116,7 @@ public class Sabotage extends BukkitRunnable implements Listener {
 			this.current_state = LOBBY;
 			
 			this.lobby = new Lobby(this);
-			Trycat.Try(() -> lobby.start(), (ex) -> ex.printStackTrace());
+			Trycat.Try(() -> lobby.start(), Throwable::printStackTrace);
 		}
 	}
 	
@@ -143,7 +127,7 @@ public class Sabotage extends BukkitRunnable implements Listener {
 		SabPlayer sabPlayer = new SabPlayer(e.getPlayer());
 		Main.SAB_PLAYERS.put(e.getPlayer().getUniqueId(), sabPlayer);
 		
-		if(sabPlayer.config.autojoin)
+		if(ConfigManager.Setting.AUTO_JOIN.getBoolean())
 			add(e.getPlayer());
 	}
 	
@@ -160,7 +144,7 @@ public class Sabotage extends BukkitRunnable implements Listener {
 		if(!players.contains(e.getEntity().getUniqueId()))
 			return;
 		
-		if(e.getEntity().hasPermission(Permissions.NO_HUNGER))
+		if(e.getEntity().hasPermission("zerodasho.sabotage.attributes.nohunger"))
 			e.setCancelled(true);
 	}
 	
@@ -169,7 +153,7 @@ public class Sabotage extends BukkitRunnable implements Listener {
 		if(!players.contains(e.getWhoClicked().getUniqueId()))
 			return;
 		
-		if(!e.getWhoClicked().hasPermission(Permissions.CRAFT))
+		if(!e.getWhoClicked().hasPermission("zerodasho.sabotage.attributes.craft"))
 			e.setCancelled(true);
 	}
 	
@@ -178,7 +162,7 @@ public class Sabotage extends BukkitRunnable implements Listener {
 		if(!players.contains(e.getPlayer().getUniqueId()))
 			return;
 		
-		if(!e.getPlayer().hasPermission(Permissions.BUILD) || !Main.SAB_PLAYERS.get(e.getPlayer().getUniqueId()).config.canBuild)
+		if(!e.getPlayer().hasPermission("zerodasho.sabotage.attributes.build") || !Main.getInstance().canBuildPlayers.contains(e.getPlayer().getUniqueId()))
 			e.setCancelled(true);
 	}
 	
@@ -204,9 +188,9 @@ public class Sabotage extends BukkitRunnable implements Listener {
         double v_y = (1.0 + 0.03 * t) * (loc.getY() - entityLoc.getY()) / t - 0.5 * g * t;
         double v_z = (1.0 + 0.07 * t) * (loc.getZ() - entityLoc.getZ()) / t;
         Vector v = e.getVelocity();
-        v.setX(v_x / 1.0);
-        v.setY(v_y / 1.0);
-        v.setZ(v_z / 1.0);
+        v.setX(v_x);
+        v.setY(v_y);
+        v.setZ(v_z);
         e.setVelocity(v);
     }
 	

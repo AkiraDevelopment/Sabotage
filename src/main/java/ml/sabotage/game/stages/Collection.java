@@ -5,6 +5,9 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.UUID;
 
+import ml.sabotage.command.sabotage.CommandSabotage;
+import ml.sabotage.game.managers.ConfigManager;
+import ml.sabotage.utils.SabUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Material;
@@ -24,9 +27,6 @@ import org.bukkit.inventory.meta.ItemMeta;
 import com.google.common.collect.Sets;
 
 import ml.sabotage.Main;
-import ml.sabotage.commands.GenericCommands;
-import ml.sabotage.commands.Permissions;
-import ml.sabotage.commands.VoteCommand;
 import ml.sabotage.game.SabArena;
 import ml.sabotage.game.SharedListener;
 import ml.sabotage.game.gui.CollectionGui;
@@ -50,7 +50,7 @@ public class Collection implements Listener {
 	public Collection(Sabotage sabotage) {
     	this.sabotage = sabotage;
     	this.players = Sets.newHashSet();
-    	this.timer = Main.config.collection.getTimer();
+    	this.timer = SabUtils.makeTimer(ConfigManager.Setting.COLLECTION_HOURS.getInt(), ConfigManager.Setting.COLLECTION_MINUTES.getInt(), ConfigManager.Setting.COLLECTION_SECONDS.getInt());
     	this.GUI = new CollectionGui(timer);
 	}
 	
@@ -84,14 +84,14 @@ public class Collection implements Listener {
 	void start() throws IOException {
 		Set<UUID> players = sabotage.lobby.players;
 		
-		this.map = new SabArena(VoteCommand.getMap());
+		this.map = new SabArena(MapManager.getMap());
 		Main.CurrentMap = map.getWorld().getName();
 		this.mapManager = new MapManager(map, players.size());
 		players.forEach(this::add);
 		
 		Trycat.Try(() -> sabotage.lobby.hub.delete(this.map.getWorld()), (e) -> {});
 		
-    	Bukkit.getPluginManager().registerEvents(this, Main.plugin);
+    	Bukkit.getPluginManager().registerEvents(this, Main.getInstance());
 		this.timer.reset();
 	}
 	
@@ -100,12 +100,12 @@ public class Collection implements Listener {
     }
 	
 	boolean run() {
-		boolean status = !GenericCommands.PAUSE && timer.tick();
+		boolean status = !CommandSabotage.PAUSE && timer.tick();
 		GUI.update();
 		
 		if(status)
 			sabotage.endCollection();
-		
+
 		return status;
 	}
 	
@@ -149,7 +149,7 @@ public class Collection implements Listener {
 		if(!sabotage.players.contains(e.getEntity().getUniqueId()))
 			return;
 		
-    	if(e.getEntity().hasPermission(Permissions.NO_DAMAGE)) 
+    	if(e.getEntity().hasPermission("zerodasho.sabotage.attributes.nodamage"))
     		e.setCancelled(true);
     }
     

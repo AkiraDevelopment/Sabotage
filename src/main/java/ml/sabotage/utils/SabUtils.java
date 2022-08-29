@@ -1,5 +1,7 @@
 package ml.sabotage.utils;
 
+import ml.zer0dasho.plumber.game.Timer;
+
 import java.io.File;
 
 public class SabUtils {
@@ -20,4 +22,9 @@ public class SabUtils {
     			file.delete();
     	}
     }
+
+	public static Timer makeTimer(int hours, int minutes, int seconds) {
+		return new Timer(null, hours, minutes, seconds);
+	}
+
 }

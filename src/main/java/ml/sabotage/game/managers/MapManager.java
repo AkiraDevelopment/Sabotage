@@ -1,11 +1,12 @@
 package ml.sabotage.game.managers;
 
-import static ml.sabotage.Main.plugin;
-
 import java.util.Arrays;
 import java.util.Set;
 import java.util.stream.Stream;
 
+import ml.sabotage.Main;
+import ml.sabotage.Validate;
+import ml.zer0dasho.plumber.utils.Trycat;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -45,33 +46,23 @@ public class MapManager {
 			@Override
 			public void run() {
 				Arrays.stream(map.getWorld().getLoadedChunks()).flatMap(chunk -> Stream.of(chunk.getTileEntities())).forEach(block -> {
-					switch(block.getType()) {
-
-						case CHEST:
-							chests.add(block.getLocation());
-							break;
-
-						case ENDER_CHEST:
-							enderchests.add(block.getLocation());
-							break;
-
-						case OAK_SIGN:
-						case OAK_WALL_SIGN:
+					switch (block.getType()) {
+						case CHEST -> chests.add(block.getLocation());
+						case ENDER_CHEST -> enderchests.add(block.getLocation());
+						case OAK_SIGN, OAK_WALL_SIGN -> {
 							Sign sign = (Sign) block;
-
-							if(sign.getLine(0).equalsIgnoreCase("[wool_lamp]"))
+							if (sign.getLine(0).equalsIgnoreCase("[wool_lamp]"))
 								lamps.add(block.getLocation());
 
-							else if(sign.getLine(0).equalsIgnoreCase("[bar]"))
+							else if (sign.getLine(0).equalsIgnoreCase("[bar]"))
 								bars.add(block.getLocation());
-							break;
-
-						default:
-							break;
+						}
+						default -> {
+						}
 					}
 				});
 				
-				int limit = 20 * size;
+				int limit = ConfigManager.Setting.CHESTS_PER_PLAYER.getInt() * size;
 		    	
 		        while(chests.size() > limit)
 		        	Sprink.randomElement(chests, true).getBlock().setType(Material.AIR);
@@ -91,7 +82,7 @@ public class MapManager {
 
 		        refill();
 			}
-		}.runTaskLater(plugin, 10L);
+		}.runTaskLater(Main.getInstance(), 10L);
     }
     
     /* Getters */
@@ -115,4 +106,11 @@ public class MapManager {
 	public Set<Location> getEnderchests() {
 		return enderchests;
 	}
+
+	public static String getMap() {
+		VoteManager voteManager = Main.getInstance().getManager(VoteManager.class);
+		String map = Trycat.Get(() -> Sprink.mostFrequentValue(voteManager.VOTES), voteManager.SELECTION.get(0));
+		return Validate.validateMap(map) ? map : null;
+	}
+
 }

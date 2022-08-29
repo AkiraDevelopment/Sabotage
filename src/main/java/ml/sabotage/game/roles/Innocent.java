@@ -1,11 +1,12 @@
 package ml.sabotage.game.roles;
 
+import ml.sabotage.game.managers.ConfigManager;
+import ml.sabotage.game.managers.PlayerManager;
 import ml.sabotage.game.tasks.Illusion;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
 import ml.sabotage.Main;
-import ml.sabotage.config.ConfigSettings.Karma;
 import ml.sabotage.game.SabPlayer;
 import ml.zer0dasho.plumber.utils.Sprink;
 
@@ -23,17 +24,16 @@ public class Innocent extends IngamePlayer {
 
     @Override
     public int determineKarma(IngamePlayer victim) {
-    	Karma karma = Main.config.innocent;
-        if(victim instanceof Innocent) return karma.innocent;
-        if(victim instanceof Saboteur) return karma.saboteur;
-        if(victim instanceof Detective) return karma.detective;
+        if(victim instanceof Innocent) return ConfigManager.Setting.INNOCENT_INNOCENT.getInt();
+        if(victim instanceof Saboteur) return ConfigManager.Setting.INNOCENT_SABOTEUR.getInt();
+        if(victim instanceof Detective) return ConfigManager.Setting.INNOCENT_DETECTIVE.getInt();
         
         return 0;
     }
     
 	@Override
 	public int karmaOnDeath() {
-		return Main.config.innocent.death;
+		return ConfigManager.Setting.INNOCENT_DETECTIVE.getInt();
 	}
 
     @SHOP
@@ -78,11 +78,12 @@ public class Innocent extends IngamePlayer {
 
     @SHOP
     public void Mirror_Illusion() {
+        PlayerManager playerManager = Main.getInstance().getManager(PlayerManager.class);
         if(!hasKarma(100)) return;
 
         for(SabPlayer p : Main.SAB_PLAYERS.values()) {
-            if(Main.sabotage.getIngame().getPlayerManager().isAlive(player.getUniqueId())) {
-                new Illusion(p.player).runTaskTimer(Main.plugin, 0L, 20L);
+            if(playerManager.isAlive(player.getUniqueId())) {
+                new Illusion(p.player).runTaskTimer(Main.getInstance(), 0L, 20L);
             }
         }
         player.sendMessage(Sprink.color("&aYou just bought Mirror Illusion!"));

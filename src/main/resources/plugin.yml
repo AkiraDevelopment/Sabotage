@@ -3,27 +3,11 @@ main: ml.sabotage.Main
 version: ${project.version}
 api-version: 1.13
 
-authors: ["0-o#9646", "AkiraDev"]
+authors: ["0-o#9646 ", "AkiraDev"]
 
 softdepend: [PlaceholderAPI, DiscordSRV]
+depend: [Config, CorpseImmortal]
 
-commands:
-    sabotage:
-        aliases: [sab]
-        description: Generic plugin command.
-        permission: zerodasho.sabotage.generic
-    sabmap:
-        permission: zerodasho.sabotage.sabmap
-    vote:
-        description: Vote for maps in the pregame lobby.
-        permission: zerodasho.sabotage.vote
-    shop:
-        description: Buy in-game shop items.
-        permission: zerodasho.sabotage.shop
-    karma:
-        description: Base    for karma commands.
-        permission: zerodasho.sabotage.karma
-        
 permissions:
     zerodasho.sabotage.sabmap:
         default: op

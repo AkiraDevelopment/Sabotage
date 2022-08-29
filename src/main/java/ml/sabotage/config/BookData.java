@@ -16,9 +16,9 @@ public class BookData extends Config {
 	public static BookData load() {
 		return Config.load(
 				BookData.class, 
-				new File(Main.DATA_FOLDER + "/book.yml"), 
+				new File(Main.getInstance().getDataFolder() + "/book.yml"),
 				YAMLFormat.FORMATTER, 
-				() -> new String(Main.plugin.getResource("book.yml").readAllBytes()));
+				() -> new String(Main.getInstance().getResource("book.yml").readAllBytes()));
 	}
 	
 	public ItemStack book = new ItemStack(Material.WRITTEN_BOOK);

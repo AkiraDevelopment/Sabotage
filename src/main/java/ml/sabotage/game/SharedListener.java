@@ -44,21 +44,21 @@ public class SharedListener {
     }
     
     public static void onBlockPlace(BlockPlaceEvent e) {
-    	
-        switch(e.getBlock().getType()) {
-	        case TNT:
-	        	SharedListener.explode(e.getBlock());
-	        	return;
-	        	
-	        case CHEST:
-	        	 e.getBlock().setMetadata("rigged_chest", new FixedMetadataValue(Main.plugin,"explode"));
-	        	 return;
-	        	 
-	        default:
-	        	break;
-        }
+
+		switch (e.getBlock().getType()) {
+			case TNT -> {
+				SharedListener.explode(e.getBlock());
+				return;
+			}
+			case CHEST -> {
+				e.getBlock().setMetadata("rigged_chest", new FixedMetadataValue(Main.getInstance(), "explode"));
+				return;
+			}
+			default -> {
+			}
+		}
         
-        if(!Main.SAB_PLAYERS.get(e.getPlayer().getUniqueId()).config.canBuild) 
+        if(!Main.getInstance().canBuildPlayers.contains(e.getPlayer().getUniqueId()))
         	e.setCancelled(true);
     }
 
@@ -70,7 +70,7 @@ public class SharedListener {
     public static void explode(Block block, int ticks) {
         block.setType(Material.AIR);
         
-        TNTPrimed tntprimed = (TNTPrimed)block.getLocation().getWorld().spawn(block.getLocation(), TNTPrimed.class);
+        TNTPrimed tntprimed = block.getLocation().getWorld().spawn(block.getLocation(), TNTPrimed.class);
         tntprimed.setFuseTicks(ticks);
         tntprimed.setIsIncendiary(true);
     }

@@ -7,13 +7,13 @@ import java.util.concurrent.ThreadLocalRandom;
 /**
  * This collection allows you to retrieve items from it randomly.
  * Every item in the collection has a probability associated with it that represents how likely it is to be returned next.
- * 
+ *
  * @author ronen
- * @see https://stackoverflow.com/questions/6409652/random-weighted-selection-in-java
+ * @see <a href="https://stackoverflow.com/questions/6409652/random-weighted-selection-in-java">Random weighted selection in java</a>
  */
 public class RandomCollection<E> {
 	
-  private final NavigableMap<Double, E> map = new TreeMap<Double, E>();
+  private final NavigableMap<Double, E> map = new TreeMap<>();
   private double total = 0;
 
   public void add(double weight, E result) {

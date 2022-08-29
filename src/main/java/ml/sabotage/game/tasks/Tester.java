@@ -3,6 +3,8 @@ package ml.sabotage.game.tasks;
 
 import java.util.Set;
 
+import ml.sabotage.game.managers.ConfigManager;
+import ml.sabotage.utils.SabUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -10,7 +12,6 @@ import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 
-import ml.sabotage.Main;
 import ml.sabotage.game.events.TesterEvent;
 import ml.sabotage.game.managers.MapManager;
 import ml.sabotage.game.roles.Detective;
@@ -30,8 +31,8 @@ public class Tester extends BukkitRunnable {
     	this.tester = tester;
         this.wool = mapManager.getLamps();
         this.bars = mapManager.getBars();
-        this.reload = new Timer(null, Main.config.tester.reload);
-        this.time = Main.config.tester.getTimer();
+        this.reload = new Timer(null, ConfigManager.Setting.TESTER_RELOAD.getInt());
+        this.time = SabUtils.makeTimer(ConfigManager.Setting.TESTER_HOURS.getInt(), ConfigManager.Setting.TESTER_MINUTES.getInt(), ConfigManager.Setting.TESTER_SECONDS.getInt());
         
         time.onFinish = () -> {
         	color = getColor(); 
@@ -76,8 +77,7 @@ public class Tester extends BukkitRunnable {
     }
 
     private Material getColor() {
-        if(tester instanceof Saboteur) {
-        	Saboteur saboteur = (Saboteur) tester;
+        if(tester instanceof Saboteur saboteur) {
             if(saboteur.hack) {
             	saboteur.hack = false;
                 return Material.LIME_WOOL;
