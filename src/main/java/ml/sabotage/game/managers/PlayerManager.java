@@ -151,16 +151,19 @@ public class PlayerManager extends Manager {
         while(toAssign.size() > 0) {
         	UUID id = Sprink.randomElement(toAssign, true);
         	Player assignment = Bukkit.getPlayer(id);
-        	
+        	System.out.println("Assigning " + assignment.getName() + " to a role");
         	if(detective == null) {
+                System.out.println("Detective: " + assignment.getName());
         		detective = resurrect(assignment, Detective::new);
         		detective.sendRoleMessage(detective);
         		detective.insight_limit = Math.min((players.size() - 3), 3);
         	} else if(neededSaboteurs > 0) {
+                System.out.println("Saboteur: " + assignment.getName());
         		Saboteur saboteur = resurrect(assignment, Saboteur::new);
         		saboteur.sendRoleMessage(detective);
         		neededSaboteurs--;
         	} else {
+                System.out.println("Innocent: " + assignment.getName());
         		Innocent innocent = resurrect(assignment, Innocent::new);
         		innocent.sendRoleMessage(detective);
         	}
